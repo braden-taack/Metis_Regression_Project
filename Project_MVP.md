@@ -2,6 +2,8 @@ Braden Taack
 ### Formula 1 Regression Project MVP
 #### September 28th, 2021
 ___
+#### *Note of Project Change*
+Originally, I was going to work with AllTrails trail data in an attempt to model trail popularity. I had built a successful pipeline for the trail pages but unfortunately was blocked by reCaptcha after attempting to access too many pages sequentially. I was booted from their server each time I tried to gather data so in the face of time, I transitioned to my backup project on Monday: Formula 1 racing data. 
 
 #### MVP
 

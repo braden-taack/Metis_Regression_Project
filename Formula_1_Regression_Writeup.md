@@ -14,27 +14,27 @@ This project originates from my interest in Formula 1 as the top competitive rac
 
 #### Data
 
-The data set was scraped from the [Formula 1 website](https://www.formula1.com/en/results.html/2021/races.html) using Selenium and BeautifulSoup. There are a total of 4188 unique driver performance summaries taken from 2006-2021. The data was restricted to this time frame to keep the race-weekend format consistent. Other years included differring amounts of practice runs, qualifying runs, etc. These past years would be a good area to explore given more time, particularly because the data goes back to 1950! There were many intial features with several duplicates due to complications with table merging on the website. While each table had new information, some of it tended to overlap. After removing duplicates, the intial features were: 'Race_result_Pos', 'Driver', 'Race_result_Car', 'Race_result_Laps', 'Fastest_laps_Pos', 'Fastest_laps_Lap', 'Fastest_laps_Time','Fastest_laps_Avg_Speed', 'Pit_stop_summary_Stops','Pit_stop_summary_Total', 'Starting_grid_Pos', 'Qualifying_Q1', 'Qualifying_Q2', 'Qualifying_Laps', 'Practice_3_Pos', 'Practice_3_Time','Practice_3_Laps', 'Practice_2_Pos', 'Practice_2_Time','Practice_2_Laps', 'Practice_1_Pos', 'Practice_1_Time','Practice_1_Laps', 'location', and 'year'. 
+The data set was scraped from the [Formula 1 website](https://www.formula1.com/en/results.html/2021/races.html) using Selenium and BeautifulSoup. There are a total of 4188 unique driver performance summaries taken from 2006-2021. The data was restricted to this time frame to keep the race-weekend format consistent. Other years included differing amounts of practice runs, qualifying runs, etc. These past years would be a good area to explore given more time, particularly because the data goes back to 1950! There were many initial features with several duplicates due to complications with table merging on the website. While each table had new information, some of it tended to overlap. After removing duplicates, the initial features were: 'Race_result_Pos', 'Driver', 'Race_result_Car', 'Race_result_Laps', 'Fastest_laps_Pos', 'Fastest_laps_Lap', 'Fastest_laps_Time','Fastest_laps_Avg_Speed', 'Pit_stop_summary_Stops','Pit_stop_summary_Total', 'Starting_grid_Pos', 'Qualifying_Q1', 'Qualifying_Q2', 'Qualifying_Laps', 'Practice_3_Pos', 'Practice_3_Time','Practice_3_Laps', 'Practice_2_Pos', 'Practice_2_Time','Practice_2_Laps', 'Practice_1_Pos', 'Practice_1_Time','Practice_1_Laps', 'location', and 'year'. 
 
 #### Algorithms
 
 *Data Cleanup* 
   
-Data cleanup was an interesting process mainly because of the time based data when it came to measuring lap times. All of the lap times were on the minute magnitude but were formatted as strings from the scraping process. These strings also had different formats: 1:00.000 vs 00.000. To overcome these discrepancies, the data was converted to a full date_time format, yyyy/mm/dd H:M:S.f. A funciton was then used to calcuate a time_delta between 1900/1/1 and total the number of seconds so that all of the lap times would be in convenient float format with seconds as the unit.  
+Data cleanup was an interesting process mainly because of the time based data when it came to measuring lap times. All of the lap times were on the minute magnitude but were formatted as strings from the scraping process. These strings also had different formats: 1:00.000 vs 00.000. To overcome these discrepancies, the data was converted to a full date_time format, yyyy/mm/dd H:M:S.f. A function was then used to calculate a time_delta between 1900/1/1 and total the number of seconds so that all of the lap times would be in convenient float format with seconds as the unit.  
   
-Another issue was duplicate data for the pit_stop_summary columns. There were nx rows for n pit stops where only the pitstop lap was unique. I decided to eliminate that column and only keep the rows where the pit stop number was a maximum. Here I was able to have the total number of pitstops in the race and the total amount of time at the pitstop without duplicating the other feature data.  
+Another issue was duplicate data for the pit_stop_summary columns. There were nx rows for n pit stops where only the pitstop lap was unique. So even though the initial data frame had ~11,000 rows, there were only ~5000 unique driver performances. I decided to eliminate the pitstop lap column and only keep the rows where the pit stop number was a maximum. Here I was able to save the total number of pitstops in the race and the total amount of time spent in pit lane without duplicating the other features' data.  
   
 Further issues came into play with the target variable, Race_Result_Pos, including strings like 'DQ' for disqualified. These were converted to null values. There were many null values in Qualifying_Q2 and Qualifying_Q3 as well. This was understood as not all drivers take extra qualifying times. If a value was missing in Q2, I filled it in with the data from Q1, assuming that the driver would have performed the same. If a value was missing in Q3, I filled it in with Q3, assuming the same. Lastly, I then dropped all nulls from the table to model with a clean data set.
 
 *Feature Engineering*
 1. Remove obvious duplicate columns, hour-of-the-day data, and gap data  
   - Obvious duplicate columns included the driver number, which is a unique number to each driver. A Driver column was already incorporated so these were not necessary.  
-  - I was not interested in incorporating hour-of-the-day data because its likelyhood to have a useful impact on the model was questionable. In each race, there would be the same hour-of-the-day for each finish position.  
+  - I was not interested in incorporating hour-of-the-day data because its likelihood to have a useful impact on the model was questionable. In each race, there would be the same hour-of-the-day for each finish position.  
   - Gap data was not included either because it was already captured in the respective Time columns. 
 2. Drop columns based on VIF (variance inflation factor)
   - 'Starting_grid_Time','Qualifying_Q3', and 'Qualifying_Pos' had huge VIF scores so were dropped. 
 3. Use a LASSO model to identify more features to be removed. 
-  - Despite some Time features with coeficients -> 0 from the LASSO model, all features were initially for alternate feature engineering.
+  - Despite some Time features with coefficients -> 0 from the LASSO model, all features were initially for alternate feature engineering.
 4. Attempt to normalize all time data when grouped by year and track
   - The goal of this was to normalize the time data so it would more easily be compared from track to track.  
   - While this resulted in a similar model score, it was actually *worse* than the raw linear regression model.
@@ -45,13 +45,13 @@ Further issues came into play with the target variable, Race_Result_Pos, includi
   - Neither categorical feature was included. 
 7. Add new interaction features
   - 'P3_P2_delta', 'P2_P1_delta', 'Q2_Q1_delta' replaced the respective qualifying and practice lap times with the differences between laps. The goal of this was to judge based on improved performance from one practice to the next rather than just time. This marginally improved the R^2 so it was kept. 
-  - 'SG_Pos_Q_Laps' multiplied the starting grid postion by the number of qualifying laps
+  - 'SG_Pos_Q_Laps' multiplied the starting grid position by the number of qualifying laps
   - 'FL_avg_p_laps' multiplied the the fastest lap average speed by the total number of practice laps
   - 'P3_Pos_P3_Laps', 'P2_Pos_P2_Laps', 'P1_Pos_P1_Laps' multiplied the number of practice laps by the practice position (ranking). These were not kept. 
   - The goal of each of these interaction terms was to explore the saying: "Practice makes perfect". Theoretically, with more practice, the better the driver would perform during the actual race. These interaction terms did prove useful and increased R^2.
 
 *Model Selection*  
-4 models were tested for this project using cross validation methods via skelearn: Linear Regression, Lasso, Ridge regression, and 2nd degree polynomial. For every cross validation test, the overall data set was initially broken up into 80% train and 20% test data. The training data was then used to cross validate using the kfolds method with 5 folds and scoring based on R^2.  
+4 models were tested for this project using cross validation methods via sklearn: Linear Regression, Lasso, Ridge regression, and 2nd degree polynomial. For every cross validation test, the overall data set was initially broken up into 80% train and 20% test data. The training data was then used to cross validate using the kfolds method with 5 folds and scoring based on R^2.  
   
 The results all had similar R2 values with the exception of the polynomial model which did worse. I selected the basic linear regression model based on the results in order to retain the features and maintain simplicity. 
 
@@ -64,4 +64,30 @@ The results all had similar R2 values with the exception of the polynomial model
 - sklearn for model preprocessing, cross validation, model selection, and final model training and testing
 - Matplotlib and Seaborn for plotting
 
-
+#### Conclusions  
+  
+My final model consisted of a Linear Regression model with the following features and coefficients. The R^2 was 0.684 and the MAE was 2.187.
+  
+  Intercept|-9.764
+  ---------|------  
+  
+  Feature|coef
+  -------|----
+  Fastest_laps_Pos| 0.308
+  Fastest_laps_Lap| 0.003
+  SG_Pos_Q_Laps|0.005
+  FL_avg_p_laps|-0.0003
+  Fastest_laps_Avg_Speed| 0.039
+  Pit_stop_summary_Stops|0.74
+  Pit_stop_summary_Total|-0.001
+  Starting_grid_Pos|0.272
+  Qualifying_Laps|0.058
+  Practice_3_Pos|0.077
+  Practice_3_Laps|0.075
+  Practice_2_Pos|0.063
+  Practice_2_Laps|0.083
+  Practice_1_Pos|0.08
+  Practice_1_Laps|0.069
+  P3_P2_delta| 0.006
+  P2_P1_delta|0.016
+  Q2_Q1_delta|0.01
